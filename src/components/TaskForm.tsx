@@ -26,7 +26,7 @@ export default function TaskForm({ onCreated }: { onCreated: () => void }) {
             <input  
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="New tasl..."
+                placeholder="New task..."
                 className=""
             />
             <button disabled={loading} className="rounded-2xl bg-[--color-brand] px-4 py-2 text-white disabled:opacity-50">
