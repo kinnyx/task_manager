@@ -22,16 +22,16 @@ export default function TaskForm({ onCreated }: { onCreated: () => void }) {
     };
 
     return (
-        <form onSubmit={submit} className="">
+        <form onSubmit={submit} className="flex gap-2">
             <input  
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="New task..."
-                className=""
+                className="flex-1 rounded-2xl border px-4 py-2 outline-none focus:ring-2 focus:ring-[var(--color-brand)]"
             />
-            <button disabled={loading} className="rounded-2xl bg-[--color-brand] px-4 py-2 text-white disabled:opacity-50">
+            <button disabled={loading} className="rounded-2xl bg-[var(--color-brand)] px-4 py-2 text-white disabled:opacity-50">
                 {loading ? "Adding..." : "+ Add"}
             </button>
         </form>
-    )
+    );
 }

@@ -9,7 +9,7 @@ export async function GET() {
 
 export async function  POST(req: Request) {
     const { title } = await req.json();
-    if (!!title || typeof title !== "string") {
+    if (!title || typeof title !== "string") {
         return NextResponse.json({ error: "title is required" }, { status: 400 });
     }
     const created = await createTask(title.trim());
