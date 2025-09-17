@@ -28,11 +28,20 @@ export default function TaskList() {
     async function toggle(id: Task["id"], completed: boolean) {
         // optimistic
         setItems(prev => prev.map(t => t.id === id ? { ...t, completed } : t))
-        await fetch(`api/tasks/${id}`, {
+
+        const res = await fetch(`api/tasks/${id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ completed }),
         });
+
+        if (!res.ok) {
+            const text = await res.text().catch(() => "");
+            console.error("Update failed:", res.status, text);
+            // rollback เผื่อไม่สำเร็จ
+            setItems(prev => prev.map(t => t.id === id ? { ...t, completed: !completed } : t));
+        }
+
         void load();
     }
 

@@ -1,56 +1,46 @@
 import { NextResponse } from "next/server";
 import { updateTask, deleteTask } from "@/lib/data/tasks";
-
-function isPlainObject(v: unknown): v is Record<string, unknown> {
-    return typeof v === "object" && v !== null && !Array.isArray(v);
-}
+import { validateUpdateTask } from "@/lib/validate";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function PUT(req: Request, ctx: RouteContext) {
-    const { id } = await ctx.params;
+    try {
+        const { id } = await ctx.params;
 
-    const bodyUnknow = await req.json().catch(() => ({}));
-    if (!isPlainObject(bodyUnknow)) {
-        return NextResponse.json({ error: ["invalid JSON body"] }, { status: 400 });
-    }
+        const raw = await req.text();
+        console.log("RAW PUT body:", raw);
 
-    const payload: { title?: string; completed?: boolean } = {};
-    const errors: string[] = [];
-
-    if ("title" in bodyUnknow) {
-        if (typeof bodyUnknow.title !== "string") {
-            errors.push("title must be a string");
+        let json: unknown = null;
+        if (raw && raw.length > 0) {
+            try {
+                json = JSON.parse(raw);
+            } catch (e) {
+                return NextResponse.json(
+                    { error: ["invalid JSON body", String(e)] },
+                    { status: 400 },
+                );
+            }
         } else {
-            const t = bodyUnknow.title.trim();
-            if (!t) errors.push("title is required when provided");
-            if (t.length > 255) errors.push("title must be <= 255 characters");
-            if (!errors.length) payload.title = t;
+            json = {};
         }
-    }
 
-    if ("completed" in bodyUnknow) {
-        if (typeof bodyUnknow.completed !== "boolean") {
-            errors.push("completed must be a boolean");
-        } else {
-            payload.completed = bodyUnknow.completed;
+        const parsed = validateUpdateTask(json);
+        if (!parsed.ok) {
+            return NextResponse.json({ errors: parsed.errors }, { status: 400 });
         }
-    }
 
-    if (!("title" in bodyUnknow) && !("completed" in bodyUnknow)) {
-        errors.push("no updatable fields provided");
+        const updated = await updateTask(id, parsed.data);
+        return NextResponse.json(updated);
+    } catch (err) {
+        console.error("PUT /api/tasks/[id] error:", err);
+        return NextResponse.json({ error: "server error" }, { status: 500 });
     }
-
-    if (errors.length) {
-        return NextResponse.json({ errors }, { status: 400 });
-    }
-
-    const updated = await updateTask(id, payload);
-    return NextResponse.json(updated);
+    
 }
 
-export async function  DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-    const { id } = await params;
+export async function  DELETE(_req: Request, ctx: RouteContext) {
+    const { id } = await ctx.params;
     await deleteTask(id);
     return NextResponse.json({ ok: true });
 }
